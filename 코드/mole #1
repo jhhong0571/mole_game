@@ -1,0 +1,172 @@
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
+public class WhackAMoleGame extends JFrame {
+    private static final int BOARD_WIDTH = 600;
+    private static final int BOARD_HEIGHT = 400;
+    private static final int MOLE_SIZE = 50;
+    private static final int GAME_DURATION = 30;
+
+    private boolean gameRunning;
+    private int score;
+    private int timeRemaining;
+    private Mole mole;
+    private BufferedImage background;
+    private BufferedImage hammer;
+
+    private Timer gameTimer;
+
+    public MoleGame() {
+        setTitle("두더지 게임");
+        setSize(BOARD_WIDTH, BOARD_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        try {
+            background = ImageIO.read(new File("background.png")); // 배경 이미지 파일
+            hammer = ImageIO.read(new File("hammer.png")); // 망치 이미지 파일
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+//키보드 컨트롤
+            public void keyPressed(KeyEvent e) {
+                if (gameRunning) {
+                    int keyCode = e.getKeyCode();
+                    if (keyCode == KeyEvent.VK_LEFT) {
+                        if (mole.isHit(0, MOLE_SIZE)) {
+                            score++;
+                            mole.hide();
+                        }
+                    } else if (keyCode == KeyEvent.VK_RIGHT) {
+                        if (mole.isHit(2 * MOLE_SIZE, MOLE_SIZE)) {
+                            score++;
+                            mole.hide();
+                        }
+                    } else if (keyCode == KeyEvent.VK_DOWN) {
+                        if (mole.isHit(MOLE_SIZE, 2 * MOLE_SIZE)) {
+                            score++;
+                            mole.hide();
+                        }
+                    }
+                }
+            }
+        });
+
+        mole = new Mole();
+        gameTimer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timeRemaining <= 0) {
+                    gameRunning = false;
+                    gameTimer.stop();
+                    JOptionPane.showMessageDialog(null, "게임 종료! 점수: " + score, "게임 결과", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    timeRemaining--;
+                    if (mole.isVisible()) {
+                        mole.hide();
+                    } else {
+                        mole.show();
+                    }
+                    repaint();
+                }
+            }
+        });
+
+        gameRunning = false;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+    }
+
+    public void startGame() {
+        gameRunning = true;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        gameTimer.start();
+        mole.hide();
+        requestFocus();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        g.drawImage(background, 0, 0, null);
+
+        if (mole.isVisible()) {
+            g.drawImage(mole.getImage(), mole.getX(), mole.getY(), null);
+        }
+
+        g.drawImage(hammer, mole.getX() - 10, mole.getY() - 10, null);
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.PLAIN, 24));
+        g.drawString("Score: " + score, 10, 30);
+        g.drawString("Time Remaining: " + timeRemaining + " seconds", 10, 60);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            WhackAMoleGame game = new WhackAMoleGame();
+            game.setVisible(true);
+            game.startGame();
+        });
+    }
+
+//두더지
+    class Mole {
+        private int x, y;
+        private boolean visible;
+        private BufferedImage image;
+
+        public Mole() {
+            x = 0;
+            y = 0;
+            visible = false;
+            try {
+                image = ImageIO.read(new File("mole.png")); // 두더지 이미지 파일
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public BufferedImage getImage() {
+            return image;
+        }
+
+        public void show() {
+            Random random = new Random();
+            x = random.nextInt(BOARD_WIDTH - MOLE_SIZE);
+            y = random.nextInt(BOARD_HEIGHT - MOLE_SIZE);
+            visible = true;
+        }
+
+        public void hide() {
+            visible = false;
+        }
+
+        public boolean isHit(int targetX, int targetY) {
+            return visible && x == targetX && y == targetY;
+        }
+    }
+}
