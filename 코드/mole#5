@@ -1,0 +1,62 @@
+
+
+
+//---------------------수정1번
+public NoviceMoleGame() {
+        setTitle("Whack-A-Mole Game (Novice)");
+        setSize(BOARD_WIDTH, BOARD_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+// 두더지가 동일한 위치에 나오는 문제 -> moles ArrayList를 초기화
+        moles = new ArrayList<>();
+        for (int i = 0; i < NUM_MOLES; i++) {
+            moles.add(new NoviceMoleGame.Mole());
+        }
+
+//---------------------------------------------------------------
+
+//----------------------------  게임 종료, 기록 작성 시스템 파트 
+//추가 기능으로 게임 종료후 이름작성 -> 다시 메인 게임런처로 되돌아가게 진행
+    public void startGame() {
+        gameRunning = true;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        gameTimer.start();
+        for (Mole mole : moles) {
+            mole.hide();
+        }
+        requestFocus();
+    }
+
+    public void endGame() {
+        gameRunning = false;
+        gameTimer.stop();
+        String playerName = getPlayerName();
+        if (playerName != null && !playerName.isEmpty()) {
+            recordScore(playerName, score);
+        }
+        resetGame();
+    }
+
+    public String getPlayerName() {
+        return JOptionPane.showInputDialog("게임 종료! 이름을 입력하세요:");
+    }
+
+    public void recordScore(String playerName, int playerScore) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("scores.txt", true))) {
+            String mode = "A"; //난이도 구분용 A는 고급자
+            writer.write(playerName + ": " + playerScore + " (" + mode + ")\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void resetGame() {
+        this.dispose();
+        SwingUtilities.invokeLater(() -> {
+            GameLauncher launcher = new GameLauncher();
+            launcher.setVisible(true);
+        });
+    }
