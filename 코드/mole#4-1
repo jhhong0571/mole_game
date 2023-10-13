@@ -1,0 +1,250 @@
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Random;
+
+public class NoviceMoleGame extends JFrame {
+    private static final int BOARD_WIDTH = 720;
+    private static final int BOARD_HEIGHT = 800;
+    private static final int MOLE_SIZE = 50;
+    private static final int GAME_DURATION = 30;
+    private static final int NUM_MOLES = 5;
+
+    private boolean gameRunning;
+    private int score;
+    private int timeRemaining;
+    private ArrayList<Mole> moles;
+    private BufferedImage background;
+    private BufferedImage hammer;
+    private BufferedImage hammer1;
+
+    private int hammerX;
+    private int hammerY;
+    private boolean isHammering;
+
+    private Timer gameTimer;
+
+    public NoviceMoleGame() {
+        setTitle("Whack-A-Mole Game (Novice)");
+        setSize(BOARD_WIDTH, BOARD_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        try {
+            background = ImageIO.read(new File("background.png"));
+            hammer = ImageIO.read(new File("hammer.png"));
+            hammer1 = ImageIO.read(new File("hammer1.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        isHammering = false;
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (gameRunning) {
+                    int keyCode = e.getKeyCode();
+                    if (keyCode == KeyEvent.VK_LEFT) {
+                        hammerX -= 20;
+                    } else if (keyCode == KeyEvent.VK_RIGHT) {
+                        hammerX += 20;
+                    } else if (keyCode == KeyEvent.VK_DOWN) {
+                        hammerY += 20;
+                    } else if (keyCode == KeyEvent.VK_UP) {
+                        hammerY -= 20;
+                    } else if (keyCode == KeyEvent.VK_SPACE) {
+                        isHammering = true;
+                    }
+
+                    if (isHammering) {
+                        for (Mole mole : moles) {
+                            if (mole.isHit(hammerX, hammerY)) {
+                                score++;
+                                mole.hide();
+                            }
+                        }
+                    }
+                    repaint();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    isHammering = false;
+                }
+            }
+        });
+
+        moles = new ArrayList<>();
+        for (int i = 0; i < NUM_MOLES; i++) {
+            moles.add(new Mole());
+        }
+
+        gameTimer = new Timer(3000, new ActionListener() {  // 두더지 나타남과 사라짐 속도를 느리게 함
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timeRemaining <= 0) {
+                    gameRunning = false;
+                    gameTimer.stop();
+                    JOptionPane.showMessageDialog(null, "게임 종료! 점수: " + score, "게임 결과", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    timeRemaining--;
+                    for (Mole mole : moles) {
+                        if (mole.isVisible()) {
+                            mole.hide();
+                        } else {
+                            mole.show();
+                        }
+                    }
+                    repaint();
+                }
+                if (timeRemaining == 0) {
+                    endGame();
+                }
+            }
+        });
+
+        gameRunning = false;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+
+        hammerX = BOARD_WIDTH / 2;
+        hammerY = BOARD_HEIGHT / 2;
+    }
+
+    public void startGame() {
+        gameRunning = true;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        gameTimer.start();
+        for (Mole mole : moles) {
+            mole.hide();
+        }
+        requestFocus();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        g.drawImage(background, 0, 0, null);
+
+        for (Mole mole : moles) {
+            if (mole.isVisible()) {
+                g.drawImage(mole.getImage(), mole.getX(), mole.getY(), null);
+            }
+        }
+
+        BufferedImage currentHammerImage = isHammering ? hammer1 : hammer;
+        g.drawImage(currentHammerImage, hammerX, hammerY, null);
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.PLAIN, 24));
+        g.drawString("Score: " + score, 10, 60);
+        g.drawString("Time: " + timeRemaining + "--", 10, 100);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            NoviceMoleGame game = new NoviceMoleGame();
+            game.setVisible(true);
+            game.startGame();
+        });
+    }
+
+    public void endGame() {
+        gameRunning = false;
+        gameTimer.stop();
+        String playerName = getPlayerName();
+        if (playerName != null && !playerName.isEmpty()) {
+            recordScore(playerName, score);
+        }
+    }
+
+    public String getPlayerName() {
+        return JOptionPane.showInputDialog("게임 종료! 이름을 입력하세요:");
+    }
+
+    public void recordScore(String playerName, int playerScore) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("scores.txt", true))) {
+            writer.write(playerName + ": " + playerScore + " (" + mode + ")\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    class Mole {
+        private int x, y;
+        private boolean visible;
+        private BufferedImage image;
+        private boolean isHit;
+
+        public Mole() {
+            Random random = new Random();
+            x = random.nextInt(BOARD_WIDTH - MOLE_SIZE);
+            y = random.nextInt(BOARD_HEIGHT - MOLE_SIZE);
+            try {
+                image = ImageIO.read(new File("mole.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public boolean isVisible() {
+            return visible && !isHit;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public BufferedImage getImage() {
+            return image;
+        }
+
+        public void show() {
+            visible = true;
+        }
+
+        public boolean isHit(int targetX, int targetY) {
+            if (!isHit && visible) {
+                Rectangle moleBoundingBox = new Rectangle(x, y, MOLE_SIZE, MOLE_SIZE);
+                Rectangle hammerBoundingBox = new Rectangle(targetX, targetY, hammer.getWidth(), hammer.getHeight());
+                if (moleBoundingBox.intersects(hammerBoundingBox)) {
+                    isHit = true;
+                    try {
+                        image = ImageIO.read(new File("mole_hit.jpg"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void hide() {
+            visible = false;
+            isHit = false;
+            try {
+                image = ImageIO.read(new File("mole.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
