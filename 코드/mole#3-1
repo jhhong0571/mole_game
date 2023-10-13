@@ -1,0 +1,31 @@
+if(timeRemaining == 0) {
+                    endGame();
+                }
+// 남은 시간 0되면 게임 종료
+...
+..
+.
+//-------------------- 결과 점수 저장
+public void endGame() {
+    gameRunning = false;
+    gameTimer.stop();
+
+    String playerName = getPlayerName(); // 이름
+    if (playerName != null && !playerName.isEmpty()) {
+        recordScore(playerName, score);
+    }
+}
+
+    public String getPlayerName() {
+        return JOptionPane.showInputDialog("게임 종료! 이름을 입력하세요:");
+    }
+
+
+    public void recordScore(String playerName, int playerScore) {
+        // 게임 종료 후에 정보 저장
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("scores.txt", true))) {
+            writer.write(playerName + ": " + playerScore + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
