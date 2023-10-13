@@ -1,0 +1,230 @@
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
+public class MoleGame extends JFrame {
+    private static final int BOARD_WIDTH = 720;
+    private static final int BOARD_HEIGHT = 800;
+    private static final int MOLE_SIZE = 50;
+    private static final int GAME_DURATION = 30;
+
+    private boolean gameRunning;
+    private int score;
+    private int timeRemaining;
+    private Mole mole;
+    private BufferedImage background;
+    private BufferedImage hammer;  //망치
+    private BufferedImage hammer1;  //망치 내려치기
+
+
+    //망치 좌표
+    private int hammerX;
+    private int hammerY;
+    //망치 내려치기
+    private boolean isHammering;
+
+    private Timer gameTimer;
+
+    public WhackAMoleGame() {
+        setTitle("Whack-A-Mole Game");
+        setSize(BOARD_WIDTH, BOARD_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        try {
+            background = ImageIO.read(new File("background.png"));
+            hammer = ImageIO.read(new File("hammer.png"));
+            hammer1 = ImageIO.read(new File("hammer1.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        isHammering = false;
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (gameRunning) {
+                    int keyCode = e.getKeyCode();
+                    if (keyCode == KeyEvent.VK_LEFT) {
+                        hammerX -= 20;
+                    } else if (keyCode == KeyEvent.VK_RIGHT) {
+                        hammerX += 20;
+                    } else if (keyCode == KeyEvent.VK_DOWN) {
+                        hammerY += 20;
+                    } else if (keyCode == KeyEvent.VK_UP) {
+                        hammerY -= 20;
+                    } else if (keyCode == KeyEvent.VK_SPACE) {
+                        isHammering = true;
+                    }
+
+                    //망치 내려치기
+                    if (isHammering && mole.isHit(hammerX, hammerY)) {
+                        score++;
+                        mole.hide();
+                    }
+                    repaint();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    isHammering = false;
+                }
+            }
+        });
+
+        //----------------
+        mole = new Mole();
+        //두더지 시간 조절
+        gameTimer = new Timer(3000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timeRemaining <= 0) {
+                    gameRunning = false;
+                    gameTimer.stop();
+                    JOptionPane.showMessageDialog(null, "게임 종료! 점수: " + score, "게임 결과", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    timeRemaining--;
+                    if (mole.isVisible()) {
+                        mole.hide();
+                    } else {
+                        mole.show();
+                    }
+                    repaint();
+                }
+            }
+        });
+
+        gameRunning = false;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+
+        hammerX = BOARD_WIDTH / 2;
+        hammerY = BOARD_HEIGHT / 2;
+    }
+
+    public void startGame() {
+        gameRunning = true;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        gameTimer.start();
+        mole.hide();
+        requestFocus();
+    }
+//--------------------
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        g.drawImage(background, 0, 0, null);
+
+        if (mole.isVisible()) {
+            g.drawImage(mole.getImage(), mole.getX(), mole.getY(), null);
+        }
+
+        BufferedImage currentHammerImage = isHammering ? hammer1 : hammer; // 내려치는 동작이면 내려치는 망치 이미지 사용
+        g.drawImage(currentHammerImage, hammerX, hammerY, null);
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.PLAIN, 24));
+        g.drawString("Score: " + score, 10, 60);
+        g.drawString("Time: " + timeRemaining + "--", 10, 100);
+    }
+//----------------------------
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MoleGame game = new MoleGame();
+            game.setVisible(true);
+            game.startGame();
+        });
+    }
+//-------------------
+    //두더지
+    class Mole {
+        private int x, y;
+        private boolean visible;
+        private BufferedImage image;
+
+        private boolean isHit;
+
+        public Mole() {
+            x = 0;
+            y = 0;
+            visible = false;
+            try {
+                image = ImageIO.read(new File("mole.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public boolean isVisible() {
+            return visible && !isHit;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public BufferedImage getImage() {
+            return image;
+        }
+
+        public void show() {
+            Random random = new Random();
+            x = random.nextInt(BOARD_WIDTH - MOLE_SIZE);
+            y = random.nextInt(BOARD_HEIGHT - MOLE_SIZE);
+            visible = true;
+        }
+
+        public boolean isHit(int targetX, int targetY) {
+            if (!isHit && visible) {
+                Rectangle moleBoundingBox = new Rectangle(x, y, MOLE_SIZE, MOLE_SIZE);
+                Rectangle hammerBoundingBox = new Rectangle(targetX, targetY, hammer.getWidth(), hammer.getHeight());
+                if (moleBoundingBox.intersects(hammerBoundingBox)) {
+                    isHit = true;
+                    try {
+                        // 맞은 상태의 이미지
+                        image = ImageIO.read(new File("mole_hit.jpg"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+        //맞으면 들어가는 두더지, 후에 다시 정상 이미지
+        public void hide() {
+            visible = false;
+            isHit = false;
+            try {
+                image = ImageIO.read(new File("mole.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+//--------------------- 추가 된거
+// 망치 내려치는 모션
+// 점수 표시
+// 두더지 나오는 속도 조절
+
+//----------------------- 추가해야되는 거
+// 초보자용, 상급자용 모드 
+// 점수 기록
+// 순위 시스템
+// 효과음
