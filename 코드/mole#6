@@ -1,0 +1,79 @@
+//음향 파일 적용
+
+
+//------------------- 사운드 관리 클래스
+import javax.sound.sampled.*;
+import java.io.File;
+import java.io.IOException;
+
+public class SoundManager {
+    private Clip clip;
+
+    public SoundManager(String soundFileName) {
+        try {
+            File soundFile = new File(soundFileName);
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+            clip = AudioSystem.getClip();
+            clip.open(audioInputStream);
+        } catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void play() {
+        if (clip != null) {
+            clip.setFramePosition(0);
+            clip.start();
+        }
+    }
+
+    public void stop() {
+        if (clip != null && clip.isRunning()) {
+            clip.stop();
+        }
+    }
+}
+
+//------------------------- 코드에 변경된 사항
+    private SoundManager soundManager;  //망치효과음
+    private SoundManager Music; // 배경음
+.
+.
+.
+soundManager = new SoundManager("hit.wav");  //wav 파일의 효과음 적용
+Music = new SoundManager("music.wav");
+.
+.
+.
+if (isHammering) {
+                        soundManager.play(); //망치를 내리칠때마다 소리 재생나게
+                        for (Mole mole : moles) {
+                            if (mole.isHit(hammerX, hammerY)) {
+                                score++;
+                                mole.hide();
+                            }
+                        }
+                    }
+
+//------------------------------ 게임 시작/종료
+ public void startGame() {
+        gameRunning = true;
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        gameTimer.start(); //배경음악 시작
+        Music.play();
+        for (Mole mole : moles) {
+            mole.hide();
+        }
+        requestFocus();
+    }
+    public void endGame() {
+        gameRunning = false;
+        gameTimer.stop(); //종료
+        Music.stop();
+        String playerName = getPlayerName();
+        if (playerName != null && !playerName.isEmpty()) {
+            recordScore(playerName, score);
+        }
+        resetGame();
+    }
