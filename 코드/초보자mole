@@ -32,7 +32,7 @@ public class NoviceMoleGame extends JFrame {
     private Timer gameTimer;
 
     public NoviceMoleGame() {
-        setTitle("Whack-A-Mole Game (Novice)");
+        setTitle("두더지 게임(초보자)");
         setSize(BOARD_WIDTH, BOARD_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
