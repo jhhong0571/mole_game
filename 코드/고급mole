@@ -34,7 +34,7 @@ public class AdvancedMoleGame extends JFrame {
     private Timer gameTimer;
 
     public AdvancedMoleGame() {
-        setTitle("Whack-A-Mole Game (Advanced)");
+        setTitle("두더지 게임(숙련자)");
         setSize(BOARD_WIDTH, BOARD_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -106,7 +106,7 @@ public class AdvancedMoleGame extends JFrame {
                 }
             }
         });
-        
+
 
         gameTimer = new Timer(1000, new ActionListener() {  // 두더지 나타남과 사라짐 속도를 빠르게 함
             @Override
@@ -347,5 +347,7 @@ public class AdvancedMoleGame extends JFrame {
             isHit = false;
         }
     }
+
+
 }
 
