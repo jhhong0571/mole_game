@@ -170,3 +170,9 @@ public class WhackAMoleGame extends JFrame {
         }
     }
 }
+
+------- 추가 사항
+망치 내려치는 파트
+두더지 여러마리 나오기
+효과음
+점수판
