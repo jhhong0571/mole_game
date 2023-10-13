@@ -1,0 +1,51 @@
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class GameLauncher extends JFrame {
+    private SoundManager soundManager;
+    public GameLauncher() {
+        setTitle("Whack-A-Mole Game Launcher");
+        setSize(300, 100);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        soundManager = new SoundManager("button.wav");
+
+        JButton noviceButton = new JButton("초보자 모드 (Novice)");
+        JButton advancedButton = new JButton("고급 모드 (Advanced)");
+
+        noviceButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                soundManager.play();
+                NoviceMoleGame noviceGame = new NoviceMoleGame();
+                noviceGame.setVisible(true);
+                noviceGame.startGame();
+                soundManager.stop();
+            }
+        });
+
+        advancedButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                soundManager.play();
+                AdvancedMoleGame advancedGame = new AdvancedMoleGame();
+                advancedGame.setVisible(true);
+                advancedGame.startGame();
+                soundManager.stop();
+            }
+        });
+
+        JPanel panel = new JPanel();
+        panel.add(noviceButton);
+        panel.add(advancedButton);
+
+        add(panel);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            GameLauncher launcher = new GameLauncher();
+            launcher.setVisible(true);
+        });
+    }
+}
