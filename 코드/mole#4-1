@@ -176,6 +176,7 @@ public class NoviceMoleGame extends JFrame {
 
     public void recordScore(String playerName, int playerScore) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("scores.txt", true))) {
+            String mode = "N"; //난이도 구분용 N은 초심자
             writer.write(playerName + ": " + playerScore + " (" + mode + ")\n");
         } catch (IOException e) {
             e.printStackTrace();
